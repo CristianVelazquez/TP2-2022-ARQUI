@@ -21,8 +21,8 @@ module uart
 );
  
     // LOCAL_PARAMETERS
-    localparam M = 326;
-    localparam N = 9;
+     localparam BAUD_RATE = 9600;
+     localparam CLK_FREC = 50000000;
     
     //INTERNAL            
     wire                      tick;              // Salida del baud rate generator.                   
@@ -30,8 +30,8 @@ module uart
     //MODULES
     baudRateGenerator
     #(
-        .M            (M),
-        .N            (N)
+        .BAUD_RATE (BAUD_RATE),
+        .CLK_FREC (CLK_FREC)
     )
     u_baud_rate_generator
     (

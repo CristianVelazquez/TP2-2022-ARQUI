@@ -1,32 +1,27 @@
 module baudRateGenerator
 #(
-    parameter                  M = 326,         // Realacion tick/clock
-    parameter                  N = $clog2(M)    // Cantidad de bits del contador log2(326)
+    parameter BAUD_RATE = 9600,
+    parameter CLK_FREC = 50000000
 )
 // El clock de la Basys3 es de 100MHz y se quiere un BR=19200 entonces, 100 MHz/(19200*16) = 326
 (
-    // INPUTS
     input                       i_clk,
     input                       i_reset,
-    
-    // OUTPUTS
     output                      o_tick
     
 );
-    
-    // INTERNAL
-    reg         [N-1:0]         counter;
+    localparam RESULTADO = CLK_FREC/(BAUD_RATE*16);     //Para 9600 da 325
+	reg [15:0] contador=0;
 	
     always @(posedge i_clk, posedge i_reset) begin
         if (i_reset)
-            counter <= 0;
-        else if (counter == M)
-            counter <= 0;  
+            contador <= 0;
+        else if (contador == RESULTADO)
+            contador <= 0;  
         else
-          counter <= counter + 1;
+          contador <= contador + 1;
     end
     
-    // OUTPUT
-    assign o_tick = (counter == M);
+    assign o_tick = (contador == RESULTADO);
 
 endmodule

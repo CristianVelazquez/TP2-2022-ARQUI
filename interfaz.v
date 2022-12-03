@@ -2,42 +2,37 @@
 
 module interfaz
 #(
-    parameter   NB_DATA = 8,                                      // # data bits
-    parameter   NB_CODE = 6,                                      // Bits de codigo
+    parameter   NB_DATA = 8,                                      
+    parameter   NB_CODE = 6,                                      
     parameter   NB_STATE = 4        
 )
 (
-    //INPUTS
-    input   wire                i_clk,                             // Clock
-                                i_reset,                           // Bit de reset 
-                                i_rx_done,                         // Bit que indica que el receptor tiene listo el dato. 
-                 [NB_DATA-1:0]  i_data,                            // Dato del receptor.
-     
-    //OUTPUTS
-    output  reg                o_data_ready,                      // Bit para indicar que el calculo se realizo correctamente
-            wire[NB_DATA-1:0]  o_data                             // Dato luego de realizar el calculo.
-                                
+    input   wire                i_clk,                            
+    input   wire                i_reset,                           
+    input   wire                i_rx_done,                        
+    input   wire [NB_DATA-1:0]  i_data,                           
+    output  wire [NB_DATA-1:0]  o_data,         
+    output  reg                 o_data_ready                     
+                                                       
 );
-    //LOCAL PARAMETERS
-    localparam                  SAVE_A 		    = 4'b0001;         // Estado donde se guarda el primer operando
-    localparam                  SAVE_B 		    = 4'b0010;         // Estado donde se guarda el segundo operando
-    localparam                  SAVE_OP         = 4'b0100;         // Estado donde se guarda la operacion
-    localparam                  MAKE_RESULT 	= 4'b1000;         //Estado donde se calcula y obtiene el resultado
+    //En ellas puedo salvar el dato de A,B, OPERACIONES y el resultado obtenido
+    localparam                  STATE_A 		    = 4'b0001;        
+    localparam                  STATE_B 		    = 4'b0010;         
+    localparam                  STATE_OP         = 4'b0100;         
+    localparam                  RESULT 	= 4'b1000;     
     
-    //INTERNAL
-    reg        [NB_DATA-1:0]      data_A, next_data_A;            // Primer operando de la ALU
-    reg        [NB_DATA-1:0]      data_B, next_data_B;            // Segundo operando de la ALU 
-    reg        [NB_CODE-1:0]      operation, next_operation;      // Operacion para la ALU 
-    reg        [NB_STATE-1:0]     state = SAVE_A;                 // Estado. Inicia en guardar el operando A 
-    reg        [NB_STATE-1:0]     next_state = SAVE_B;            // Siguiente estado. Inicia en guardar el operando B. 
+    reg        [NB_DATA-1:0]      data_A, next_data_A;           
+    reg        [NB_DATA-1:0]      data_B, next_data_B;            
+    reg        [NB_CODE-1:0]      operation, next_operation;     
+    reg        [NB_STATE-1:0]     state = STATE_A;                 
+    reg        [NB_STATE-1:0]     next_state = STATE_B;            
 
-    //Maquina de estados
 always @(posedge i_clk, posedge i_reset) begin
-	if(i_reset) begin                                              // En el reset vuelvo al primer estado e inicializo los registros.   
-        data_A          <= 8'b00000000;
+	if(i_reset) begin                                     //Se inicializan los datos  
+        data_A          <= 8'b00000000;                   
         data_B          <= 8'b00000000;
         operation       <= 5'b00000;
-        state           <= SAVE_A;
+        state           <= STATE_A;
     end
 	else begin
         data_A    <= next_data_A;
@@ -56,28 +51,28 @@ always @(*) begin
 	o_data_ready   = 1'b0;
 	
 	case (state)
-		SAVE_A:                                                       //En el primer estado guardamos el primer operando y pasamos al siguiente estado.
-            if(i_rx_done) begin              
+		STATE_A:                                                      //El primer dato se guarda en STATE_A   
+            if(i_rx_done) begin                                       //El segundo en STATE_B y el ultimo en STATE_OP
                 next_data_A= i_data;
-                next_state = SAVE_B;
+                next_state = STATE_B;
             end
-		SAVE_B:	                                                      //En el segundo estado 
+		STATE_B:	                                                       
             if(i_rx_done) begin    
                 next_data_B= i_data;
-                next_state = SAVE_OP;
+                next_state = STATE_OP;
             end	
-		SAVE_OP: 
+		STATE_OP: 
 			if(i_rx_done) begin    
                 next_operation  = i_data;
-                next_state      = MAKE_RESULT;
+                next_state      = RESULT;
             end
-		MAKE_RESULT:	 
+		RESULT:	 
             if(~i_rx_done) begin 
                 o_data_ready    = 1'b1;
-                next_state      = SAVE_A;		
+                next_state      = STATE_A;		
             end
-		default: begin
-            next_state      = SAVE_A;
+		default: begin                 //Caso en el que no haya un estado conocido
+            next_state      = STATE_A;
             next_data_A     = 8'b00000000;
             next_data_B     = 8'b00000000;
             next_operation  = 5'b00000;
@@ -90,12 +85,12 @@ end
         .NB_DATA    (NB_DATA),
         .NB_DATA_OUT(NB_DATA)
     )
-    alu_1 
+    u_alu
     (	
-        .i_a(data_A), 
-        .i_b(data_B),
-        .i_op(operation),
-        .o_r(o_data)
+        .i_data_a(data_A), 
+        .i_data_b(data_B),
+        .i_code(operation),
+        .o_led(o_data)
     );
 
 endmodule
