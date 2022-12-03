@@ -2,7 +2,7 @@
 
 module tb_top();
 
-    localparam NB_STATE    = 4;
+    localparam NB_STATE    = 2;
     localparam NB_DATA     = 8;   //Cantidad de bits
     localparam SB_TICK     = 16; //Numero de Ticks que dura un bit 
     localparam NB_CODE     = 6;
@@ -23,7 +23,7 @@ module tb_top();
     
     initial begin
         i_clk = 1'b0;
-        i_reset = 1'b1;
+        i_reset = 1'b1; //para reiniciar reg
         i_tx_start = 1'b0;
         
         #10
@@ -35,24 +35,24 @@ module tb_top();
         
         #20
         i_tx_start = 1'b0; 
-        
-        #1050000
+        //segundo dato
+        #1060000
         i_tx_start = 1'b1; 
         i_tx_uart = I_DATA_B;
         
         #20
         i_tx_start = 1'b0; 
-        
-        #1050000
+        //OPERACION
+        #1060000
         i_tx_start = 1'b1; 
         i_tx_uart = OP_CODE;
         
         #20
         i_tx_start = 1'b0; 
         
-        #1050000
+        #1000000
              
-        $display("############# Test TERMINADO ############");
+        $display("********** Test TERMINADO **********");
         $finish();
     end
     
@@ -74,7 +74,8 @@ module tb_top();
     uart
     #(
         .NB_DATA          (NB_DATA),
-        .SB_TICK          (SB_TICK)
+        .SB_TICK          (SB_TICK),
+        .NB_STATE         (NB_STATE)
     )
     u_uart
     (
@@ -84,8 +85,8 @@ module tb_top();
         .i_clk            (i_clk),
         .i_reset          (i_reset), 
         .o_tx             (i_rx_top),
-        .o_tx_done        (o_tx_done),
-        .o_rx_done        (o_rx_done),
+        .o_tx_done_tick   (o_tx_done),
+        .o_rx_done_tick   (o_rx_done),
         .o_rx             (o_rx_uart)
     );
          

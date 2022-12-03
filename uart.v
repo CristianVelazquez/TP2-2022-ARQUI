@@ -2,32 +2,29 @@
 
 module uart
 #(
-    parameter   NB_DATA     = 8,                // Numero de bits del dato  
-				 SB_TICK     = 16                // Ticks for stop bits   
+    parameter   NB_DATA     = 8,                      // # data bits 
+	parameter   SB_TICK     = 16,                      // # ticks for stop bits
+	parameter   NB_STATE    = 2      
 )
 (
-    //INPUTS
-    input wire              i_clk,              
-                             i_reset,
-                             i_rx,               // Entrada serial al receptor.  
-                             i_tx_start,         // Senal de aviso para empezar a transmitir. Se activa por alto. 
-    input wire [NB_DATA-1:0] i_tx,              // Datos a transmitir
-    //OUTPUTS
-    output wire                    o_tx,        // Salida serial desde el transmisor. 
-                                   o_tx_done,   // Indica cuando el transmior termino de transmitir un dato.
-                                   o_rx_done,   // Indica si el RX termino de recibir un nuevo dato.
-                [NB_DATA -1 : 0]   o_rx         // Dato recibido por el receptor. 
+    input wire                         i_clk,              
+    input wire                         i_reset,
+    input wire                         i_rx,               
+    input wire                         i_tx_start,          
+    input wire  [NB_DATA-1:0]          i_tx,              
+    
+    output wire                        o_tx,        
+    output wire                        o_tx_done_tick,  
+    output wire                        o_rx_done_tick,   
+    output wire [NB_DATA -1 : 0]       o_rx         
     
 );
  
-    // LOCAL_PARAMETERS
-     localparam BAUD_RATE = 9600;
-     localparam CLK_FREC = 50000000;
-    
-    //INTERNAL            
-    wire                      tick;              // Salida del baud rate generator.                   
+    localparam BAUD_RATE = 9600;
+    localparam CLK_FREC = 50000000;
+              
+    wire                               tick;                      
                                 
-    //MODULES
     baudRateGenerator
     #(
         .BAUD_RATE (BAUD_RATE),
@@ -35,30 +32,32 @@ module uart
     )
     u_baud_rate_generator
     (
-        .i_clk        (i_clk),
         .i_reset      (i_reset),
+        .i_clk        (i_clk),
         .o_tick       (tick)
     );
     
     rx
     #(
         .NB_DATA      (NB_DATA),
-        .SB_TICK      (SB_TICK)
+        .SB_TICK      (SB_TICK),
+        .NB_STATE     (NB_STATE)
     )
     u_rx
     (
-        .i_clk        (i_clk),
-        .i_reset      (i_reset),
-        .i_tick       (tick),
-        .i_rx         (i_rx),
-        .o_rx_done_tick(o_rx_done),
-        .o_data       (o_rx)
+        .i_reset          (i_reset),
+        .i_clk            (i_clk),
+        .i_tick           (tick),
+        .i_rx             (i_rx),
+        .o_rx_done_tick   (o_rx_done_tick),
+        .o_data           (o_rx)
     );
     
     tx
     #(
         .NB_DATA      (NB_DATA),
-        .SB_TICK      (SB_TICK)
+        .SB_TICK      (SB_TICK),
+        .NB_STATE     (NB_STATE)
     )
     u_tx
     (
@@ -67,7 +66,7 @@ module uart
         .i_tick       (tick),
         .i_tx_start   (i_tx_start),
         .i_data       (i_tx),
-        .o_tx_done_tick(o_tx_done),
+        .o_tx_done_tick(o_tx_done_tick),
         .o_tx         (o_tx)
     );                               
 endmodule

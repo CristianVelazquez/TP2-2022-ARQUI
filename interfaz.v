@@ -4,7 +4,7 @@ module interfaz
 #(
     parameter   NB_DATA = 8,                                      
     parameter   NB_CODE = 6,                                      
-    parameter   NB_STATE = 4        
+    parameter   NB_STATE = 2        
 )
 (
     input   wire                i_clk,                            
@@ -16,10 +16,10 @@ module interfaz
                                                        
 );
     //En ellas puedo salvar el dato de A,B, OPERACIONES y el resultado obtenido
-    localparam                  STATE_A 		    = 4'b0001;        
-    localparam                  STATE_B 		    = 4'b0010;         
-    localparam                  STATE_OP         = 4'b0100;         
-    localparam                  RESULT 	= 4'b1000;     
+    localparam                  STATE_A 		    = 2'b00;        
+    localparam                  STATE_B 		    = 2'b01;         
+    localparam                  STATE_OP            = 2'b10;         
+    localparam                  RESULT 	            = 2'b11;     
     
     reg        [NB_DATA-1:0]      data_A, next_data_A;           
     reg        [NB_DATA-1:0]      data_B, next_data_B;            
