@@ -2,35 +2,34 @@
 
 module tx
 #( 
-    parameter                  NB_DATA     = 8,       // Numero de bits del dato
-    parameter                  SB_TICK     = 16       // Ticks for stop bits  
+    parameter                  NB_DATA     = 8,        // # data bits
+    parameter                  SB_TICK     = 16,       // # ticks for stop bits
+    parameter                  NB_STATE    = 2   
 )
-(
-    // INPUTS         
-    input wire                  i_tick,
+(       
     input wire                  i_clk,
     input wire                  i_reset,
-    input wire                  i_tx_start,                
-    input wire [NB_DATA-1:0]    i_data,
+    input wire                  i_tick,               //Ticks de entrada del baudGen
+    input wire                  i_tx_start,           //Habilita el comienzo de transmision     
+    input wire [NB_DATA-1:0]    i_data,               
     
-    // OUTPUTS
     output reg 	                o_tx_done_tick,
     output wire                 o_tx
 );
 
-    // LOCAL_PARAMETERS
-    localparam                  IDLE        = 4'b0001;
-    localparam                  START    	= 4'b0010;
-    localparam                  DATA        = 4'b0100;
-    localparam                  STOP        = 4'b1000;
+    localparam                  IDLE        = 2'b00;
+    localparam                  START    	= 2'b01;
+    localparam                  DATA        = 2'b10;
+    localparam                  STOP        = 2'b11;
+     // signal declaration
+    reg        [NB_STATE-1:0]   state_reg, state_next;
+    reg        [3:0]            s_reg, s_next;         // Contador de ticks del baudGen
+    reg        [3:0]            n_reg, n_next;         // Contador de bits transmitidos
+    reg        [NB_DATA-1:0]    b_reg, b_next;         // Buffer de datos a transmitir
+    reg                         tx_reg, tx_next;
+    //reg                         o_tx_done_tick_reg, o_tx_done_tick_next;
     
-    reg            [3:0]       state_reg, state_next;
-    reg            [3:0]       s_reg, s_next;         // Contador s: TickCounter (del BRGenerator)
-    reg            [3:0]       n_reg, n_next;         // Contador n: mantiene la cuenta de los bits recibidos
-    reg        [NB_DATA-1:0]   b_reg, b_next;         // Buffer de datos a transmitir
-    reg                        tx_reg, tx_next;
-    
-    // MEMORY
+    // MEMORIA
     always @(posedge i_clk, posedge i_reset) begin
         if (i_reset)  begin  
             state_reg     <= IDLE;  
@@ -49,71 +48,67 @@ module tx
     
     always @(*) begin    
         state_next = state_reg;
-        o_tx_done_tick = 1'b0;                          // Reseteo el flag DONE (valid).
+        o_tx_done_tick = 1'b0;                          // Reseteo el flag DONE
         s_next = s_reg;
         n_next = n_reg;
         b_next = b_reg;
         tx_next = tx_reg;
-
-     
+  
         case(state_reg)
-            IDLE: begin                                 // IDLE_STATE:
-                tx_next = 1'b1;                         // Seteo tx_next=1 ya que no se envia nada
-                if(i_tx_start) begin                    // Comienza a transmitir bit a bit cuando la se?al de    ->
-                    state_next = START;                 // entrada i_tx_start = 1 y paso al estado START.
-                    s_next = 4'b0000;                   // Reinicio TickCounter.
-                    b_next = i_data;                    // Asigno el dato de entrada i_data a transmitir al buff ->
-                end                                     // buffer de datos a transmitir
-            end
-                    
-            START: begin                                // START_STATE:
-                tx_next = 1'b0;                         // Seteo tx_next=0 para enviar el bit de START.
-                if(i_tick)                              // Entro cada vez que llega un tick del BRGenerator.
-                    if(s_reg == (SB_TICK-1)) begin      // Si es igual a 15 la se?al indica que se calibro.
-                        s_next = 4'b0000;               // Reinicio TickCounter.
-                        n_next = 3'b000;                // Reinicio el contador de bits transmititdos.
-                        state_next = DATA;              // Paso al estado DATA para comenzar a enviar bits
+            IDLE: begin                                 //## IDLE:
+                tx_next = 1'b1;                         //tx_next=1 Porque no envio nada
+                if(i_tx_start) begin                   
+                    state_next = START;                 // i_tx_start = 1, comienzo a enviar y paso al estado START
+                    s_next =0;                          // Reinicio TickCounter
+                    b_next = i_data;                    // Asigno el dato a transmitir al buff de datos a enviar##
+                end                                     
+            end                    
+            START: begin                                // START:
+                tx_next = 1'b0;                         // tx_next=0 para enviar el bit de START.
+                if(i_tick)                              
+                    if(s_reg == (SB_TICK-1)) begin      // Para calibrar la signal debe ser igual a 15
+                        s_next = 0;                     // Reinicio TickCounter.
+                        n_next = 3'b000;                // Reinicio el contador de bits transmititdos
+                        state_next = DATA;              //Cuando es 15 paso al estado DATA para enviar
                     end
-                    else                                // En caso de que TickCounter no haya llegado a '15'      ->
-                        s_next = s_reg + 1;             // lo incremento. (Para calibrarlo)
-            end     
-                     
-            DATA: begin                                 // DATA_STATE:
-                tx_next = b_reg[0];                     // Seteo tx_next=LSB para enviar el bit bajo (D0 primero)
-                if(i_tick)                              // Entro cada vez que llega un tick del BRGenerator.
-                    if(s_reg == (SB_TICK-1)) begin      // Si es igual a 15 la se?al indica que se calibro.
-                        s_next = 4'b0000;               // Reinicio TickCounter.
-                        b_next = b_reg >> 1;            // Desplazo b_reg a la derecha y lo asigno a b_next.
-                        if(n_reg == (NB_DATA-1))        // Si es igual a 7 es porque ya envie todos los bits de ->
-                                state_next = STOP;      // datos, por lo que paso al estado de STOP.
-                        else                            // En caso que no haya llegado, incremento el contador de->
-                                n_next = n_reg + 1;     // bits recibidos.
+                    else                                //Si no es 15 sigo incrementando para que se calibre
+                        s_next = s_reg + 1;             
+            end                          
+            DATA: begin                                 // DATA:
+                tx_next = b_reg[0];                     // tx_next=LSB envio el bit menos significativo
+                if(i_tick)                              
+                    if(s_reg == (SB_TICK-1)) begin      // Para calibrar la signal debe ser igual a 15
+                        s_next = 0;                     // Reinicio TickCounter
+                        b_next = b_reg >> 1;            // Desplazo b_reg a la derecha y lo asigno a b_next
+                        if(n_reg == (NB_DATA-1))        // Si es igual a 7 se enviaron todos los bits de datps
+                                state_next = STOP;      // Paso al estado STOP
+                        else                            
+                                n_next = n_reg + 1;     // Si no enviaron todos incremento el reg de bit enviados
                     end
-                    else                                // En caso de que TickCounter no haya llegado a '15'     ->
-                    s_next = s_reg + 1;                 // lo incremento. (Se deben enviar datos cada 15 ticks).
-            end
-                            
-            STOP: begin                                 // STOP_STATE:
-                tx_next = 1'b1;                         // Seteo tx_next=1 para enviar el bit de STOP.
-                if(i_tick)                              // Entro cada vez que llega un tick del BRGenerator.
-                    if(s_reg == (SB_TICK-1)) begin      // Si es igual a 15 la se?al indica que se calibro.
-                        o_tx_done_tick = 1'b1;          // Pongo el alto el flag DONE.
+                    else                                
+                    s_next = s_reg + 1;                 // cuando no es 15 sigo incrementado, se envian cada 15 ticks
+            end                            
+            STOP: begin                                 // STOP:
+                tx_next = 1'b1;                         // tx_next=1 para enviar el bit de STOP.
+                if(i_tick)                              
+                    if(s_reg == (SB_TICK-1)) begin      // Para calibrar la signal debe ser igual a 15
+                        o_tx_done_tick = 1'b1;          // bit que indica que termino
                         state_next = IDLE;              // Paso al estado de IDLE.
                     end
-                    else                                // En caso de que TickCounter no haya llegado a '15'     ->
-                        s_next = s_reg + 1;             // lo incremento. (Se deben enviar datos cada 15 ticks).
+                    else                                
+                        s_next = s_reg + 1;             
                 end  
-            default : begin                             // DEFAULT: Fault Recovery
-                state_next = IDLE;                      // Vuelvo al estado IDLE.
-                s_next     = 1'b0;                      // Reinicio TickCounter.
-                n_next     = 1'b0;                      // Reinicio contador de bits recibidos.
-                b_next     = 1'b0;                      // Reinicio buffer de datos recibidos.
-                tx_next    = 1'b1;                      // Pongo en alto la salida para no enviar bit de START.
+            default : begin                             // DEFAULT:
+                state_next = IDLE;                      // reinicio los registros
+                s_next     = 1'b0;                      
+                n_next     = 1'b0;                      
+                b_next     = 1'b0;                     
+                tx_next    = 1'b1;                      
             end                                         
         endcase
     end
     
     // OUTPUT    
-    assign o_tx = tx_reg ;                              // Asigno el bit a transmitir a la salida del transmisor.
-        
+    assign o_tx = tx_reg ;                              //Salida del transmisor
+ //assign o_tx_done_tick = o_tx_done_tick_reg;   
 endmodule

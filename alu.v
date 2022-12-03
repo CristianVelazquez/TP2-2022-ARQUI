@@ -2,22 +2,18 @@
 
 module alu 
 #(
-    parameter NB_CODE = 6,
+    parameter NB_OP = 6,  
     parameter NB_DATA = 8,
     parameter NB_DATA_OUT = 9
 )
 
 (   
-    // INPUTS
-    input wire      [NB_DATA-1:0]      i_a,
-    input wire      [NB_DATA-1:0]      i_b,
-    input wire      [NB_CODE-1:0]      i_op,
-    
-    // OUTPUTS
-    output wire     [NB_DATA_OUT-1:0]  o_r
+    input wire      [NB_DATA-1:0]      i_data_a,
+    input wire      [NB_DATA-1:0]      i_data_b,
+    input wire      [NB_OP-1:0]        i_code,
+    output wire     [NB_DATA_OUT-1:0]  o_led
 );
     
-    // LOCAL_PARAMETERS
     localparam  ADD = 6'b100000;
     localparam  SUB = 6'b100010;
     localparam  AND = 6'b100100;
@@ -27,41 +23,33 @@ module alu
     localparam  SRL = 6'b000010;
     localparam  NOR = 6'b100111;
     
-    // INTERNAL 
-    reg             [NB_DATA_OUT-1:0]  o_res;
+    //auxiliar salida
+    reg             [NB_DATA_OUT-1:0]  o_result;
     
-    assign o_r = o_res;
+    assign o_led = o_result;
     
+    //Se simplifico el always a solo operaciones
     always @(*)
         begin
-            case(i_op)
-                // ADD
+            case(i_code)
                 ADD:
-                o_res = i_a + i_b;
-                // SUB
+                o_result = i_data_a + i_data_b;
                 SUB:
-                o_res = i_a - i_b;
-                // AND
+                o_result = i_data_a - i_data_b;
                 AND:
-                o_res = i_a & i_b;
-                // OR
+                o_result = i_data_a & i_data_b;
                 OR:
-                o_res = i_a | i_b;
-                // XOR
+                o_result = i_data_a | i_data_b;
                 XOR:
-                o_res = i_a ^ i_b;
-                // SRA
+                o_result = i_data_a ^ i_data_b;
                 SRA:
-                o_res = i_a >>> i_b;
-                // SRL
+                o_result = i_data_a >>> i_data_b;
                 SRL:
-                o_res = i_a >> i_b;
-                // NOR
+                o_result = i_data_a >> i_data_b;
                 NOR:
-                o_res = ~(i_a | i_b);  
-                //DEFAULT
+                o_result = ~(i_data_a | i_data_b);  
                 default:
-                o_res = {NB_DATA_OUT{1'b0}};
+                o_result = {NB_DATA_OUT{1'b0}};
             endcase
         end			
 endmodule
