@@ -49,15 +49,21 @@ El esquema de sobremuestreo básicamente realiza la función de una señal de re
 
 ### Generador de velocidad de transmisión
 
-El generador de velocidad en baudios genera una señal de muestreo cuya frecuencia es exactamente 16 veces la velocidad en baudios designada por el UART..
+El generador de velocidad en baudios genera una señal de muestreo cuya frecuencia es exactamente 16 veces la velocidad en baudios designada por el UART.
 
 Para la velocidad de 19.200 baudios, la velocidad de muestreo debe ser de 307.200 (es decir, 19.200* 16) impulsos por segundo. Dado que la velocidad del reloj del sistema es de 50 MHz, el generador de velocidad en baudios necesita un contador mod-163 (es decir, (50 * 10 ^ 6)/(307.200)), en el que se afirma un tic de un ciclo de reloj una vez cada 163 ciclos de reloj. 
 
 ### Receptor UART
 
-Para adaptarse a modificaciones futuras, se utilizan dos constantes en la descripción. La constante DBIT indica el número de bits de datos y la constante SB_TICK indica el número de ticks necesarios para los bits de stop, que es 16, 24 y 32 para 1, 1,5 y 2 bits de parada, respectivamente. DBIT y SB_TICK se asignan a 8 y 16 en este diseño.
+Para adaptarse a modificaciones futuras, se utilizan dos constantes en la descripción, la constante DBIT indica el número de bits de datos y la constante SB_TICK indica el número de ticks necesarios para los bits de stop, que es 16, 24 y 32 para 1, 1,5 y 2 bits de parada. DBIT y SB_TICK tienen un valor de 8 y 16 en este diseño.
 
-Los estados inactivo (`IDLE`), inicio (`START`), datos (`DATA`) y parada (`STOP`), representan la situación de inactividad, el procesamiento del bit de inicio, los bits de datos y el bit de parada. `s_tick` es la señal de habilitación del generador de velocidad en baudios y hay 16 tics en un intervalo de bits. La máquina de estado permanece en el mismo estado a menos que se afirme la señal `s_tick`. Hay dos contadores, representados por los registros `s` y `n`. El registro `s` realiza un seguimiento del número de tics de muestreo y cuenta hasta 7 en el estado de inicio, hasta 15 en el estado de datos y hasta SB_TICK en el estado de parada. El registro `n` realiza un seguimiento del número de bits de datos recibidos en el estado de datos. Los bits recuperados se desplazan y se vuelven a ensamblar en el registro `b`. `rx_done_tick` se afirma durante un ciclo de reloj después de que se completa el proceso de recepción.
+Los estados inactivo (`IDLE`), inicio (`START`), datos (`DATA`) y parada (`STOP`), representan la situación de inactividad, el procesamiento del bit de inicio, los bits de datos y el bit de parada. `s_tick` es la señal de habilitación del generador de velocidad en baudios y hay 16 tics en un intervalo de bits. La máquina de estado permanece en el mismo estado a menos que se afirme la señal `s_tick`. Hay dos contadores, representados por los registros `s` y `n`. El registro `s` realiza un seguimiento del número de tics de muestreo y cuenta hasta 7 en el estado de inicio, hasta 15 en el estado de datos y hasta SB_TICK en el estado de parada. El registro `n` realiza un seguimiento del número de bits de datos recibidos en el estado de datos. Los bits recuperados se desplazan y se vuelven a ensamblar en el registro `b`. `rx_done_tick` se afirma durante un ciclo de reloj después de que se completa el proceso de recepción.El diagrama de estado para un receptor `UART` se muestran en la Figura .
+
+
+![maquina_rx](./image/maquina_rx.png)
+
+
+Figura - Diagrama de estados de un receptor
 
 ### Transmisor UART
 
@@ -66,8 +72,34 @@ La organización del subsistema de transmisión UART es similar a la del subsist
 El transmisor UART es esencialmente un registro de desplazamiento que desplaza bits de datos a una velocidad específica. La velocidad se puede controlar mediante tics de habilitación de un ciclo de reloj generados por el generador de velocidad en baudios. Debido a que no se trata de sobremuestreo, la frecuencia de los tics es 16 veces más lenta que la del receptor UART. El transmisor UART comparte el generador de velocidad en baudios del receptor UART y usa un contador interno para realizar un seguimiento de la cantidad de tics habilitados. Se desplaza un bit cada 16 tics de habilitación.
 
 
-La máquina de estado del transmisor UART es similar al del receptor UART. Después de la afirmación de la señal de inicio de tx, se carga la palabra de datos y luego se avanza gradualmente a través de los estados de inicio, datos y parada. La afirmación de la señal `tx_done_tick` señala la finalización del proceso de recepción.
+La máquina de estado del transmisor UART es similar al del receptor UART. Después de la afirmación de la señal de inicio de tx, se carga la palabra de datos y luego se avanza gradualmente a través de los estados de inicio, datos y parada. La afirmación de la señal `tx_done_tick` señala la finalización del proceso de recepción. El diagrama de estado para un transmisor `UART` se muestran en la Figura .
+
+![maquina_tx](./image/maquina_tx.png)
+
+Figura - Diagrama de estados de un transmisor
+
+### Implementación
+
+### Síntesis
+
+En el diagrama esquemático de la Figura se puede apreciar la jerarquia de bloques y su interconexion
+
+
+![sintesis.png](./image/sintesis.png)
+
+Figura . Diagrama esquemático del sistema
+
+A continuación se observa sobre el interior del componente `UART`
+
+![zoomUart.png](./image/zoomUart.png)
+
+A continuación se observa sobre el interior de la `ALU`
+
+![aluZoom.png](./image/aluZoom.png)
 
 
 
+Figura . Diagrama esquemático del `UART`
+
+### Simulación
 
