@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 module baudRateGenerator
 #(
     parameter BAUD_RATE = 9600,

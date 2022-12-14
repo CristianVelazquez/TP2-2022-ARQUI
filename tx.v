@@ -23,7 +23,7 @@ module tx
     localparam                  STOP        = 2'b11;
      // signal declaration
     reg        [NB_STATE-1:0]   state_reg, state_next;
-    reg        [3:0]            s_reg, s_next;         // Contador de ticks del baudGen
+    reg        [3:0]            tickCounter_reg, tickCounter_next;         // Contador de ticks del baudGen
     reg        [3:0]            n_reg, n_next;         // Contador de bits transmitidos
     reg        [NB_DATA-1:0]    b_reg, b_next;         // Buffer de datos a transmitir
     reg                         tx_reg, tx_next;
@@ -33,13 +33,14 @@ module tx
     always @(posedge i_clk, posedge i_reset) begin
         if (i_reset)  begin  
             state_reg     <= IDLE;  
-            s_reg         <= 0;  
+            tickCounter_reg         <= 0;  
             n_reg         <= 0;  
-            b_reg         <= 0;  
+            b_reg         <= 0;
+            //tx_reg        <= 1; 
         end 
         else begin  
             state_reg     <= state_next;
-            s_reg         <= s_next;  
+            tickCounter_reg         <= tickCounter_next;  
             n_reg         <= n_next;  
             b_reg         <= b_next; 
             tx_reg        <= tx_next;   
@@ -49,7 +50,7 @@ module tx
     always @(*) begin    
         state_next = state_reg;
         o_tx_done_tick = 1'b0;                          // Reseteo el flag DONE
-        s_next = s_reg;
+        tickCounter_next = tickCounter_reg;
         n_next = n_reg;
         b_next = b_reg;
         tx_next = tx_reg;
@@ -59,26 +60,26 @@ module tx
                 tx_next = 1'b1;                         //tx_next=1 Porque no envio nada
                 if(i_tx_start) begin                   
                     state_next = START;                 // i_tx_start = 1, comienzo a enviar y paso al estado START
-                    s_next =0;                          // Reinicio TickCounter
+                    tickCounter_next =0;                          // Reinicio TickCounter
                     b_next = i_data;                    // Asigno el dato a transmitir al buff de datos a enviar##
                 end                                     
             end                    
             START: begin                                // START:
                 tx_next = 1'b0;                         // tx_next=0 para enviar el bit de START.
                 if(i_tick)                              
-                    if(s_reg == (SB_TICK-1)) begin      // Para calibrar la signal debe ser igual a 15
-                        s_next = 0;                     // Reinicio TickCounter.
+                    if(tickCounter_reg == (SB_TICK-1)) begin      // Para calibrar la signal debe ser igual a 15
+                        tickCounter_next = 0;                     // Reinicio TickCounter.
                         n_next = 3'b000;                // Reinicio el contador de bits transmititdos
                         state_next = DATA;              //Cuando es 15 paso al estado DATA para enviar
                     end
                     else                                //Si no es 15 sigo incrementando para que se calibre
-                        s_next = s_reg + 1;             
+                        tickCounter_next = tickCounter_reg + 1;             
             end                          
             DATA: begin                                 // DATA:
                 tx_next = b_reg[0];                     // tx_next=LSB envio el bit menos significativo
                 if(i_tick)                              
-                    if(s_reg == (SB_TICK-1)) begin      // Para calibrar la signal debe ser igual a 15
-                        s_next = 0;                     // Reinicio TickCounter
+                    if(tickCounter_reg == (SB_TICK-1)) begin      // Para calibrar la signal debe ser igual a 15
+                        tickCounter_next = 0;                     // Reinicio TickCounter
                         b_next = b_reg >> 1;            // Desplazo b_reg a la derecha y lo asigno a b_next
                         if(n_reg == (NB_DATA-1))        // Si es igual a 7 se enviaron todos los bits de datps
                                 state_next = STOP;      // Paso al estado STOP
@@ -86,21 +87,21 @@ module tx
                                 n_next = n_reg + 1;     // Si no enviaron todos incremento el reg de bit enviados
                     end
                     else                                
-                    s_next = s_reg + 1;                 // cuando no es 15 sigo incrementado, se envian cada 15 ticks
+                    tickCounter_next = tickCounter_reg + 1;                 // cuando no es 15 sigo incrementado, se envian cada 15 ticks
             end                            
             STOP: begin                                 // STOP:
                 tx_next = 1'b1;                         // tx_next=1 para enviar el bit de STOP.
                 if(i_tick)                              
-                    if(s_reg == (SB_TICK-1)) begin      // Para calibrar la signal debe ser igual a 15
+                    if(tickCounter_reg == (SB_TICK-1)) begin      // Para calibrar la signal debe ser igual a 15
                         o_tx_done_tick = 1'b1;          // bit que indica que termino
                         state_next = IDLE;              // Paso al estado de IDLE.
                     end
                     else                                
-                        s_next = s_reg + 1;             
+                        tickCounter_next = tickCounter_reg + 1;             
                 end  
             default : begin                             // DEFAULT:
                 state_next = IDLE;                      // reinicio los registros
-                s_next     = 1'b0;                      
+                tickCounter_next     = 1'b0;                      
                 n_next     = 1'b0;                      
                 b_next     = 1'b0;                     
                 tx_next    = 1'b1;                      

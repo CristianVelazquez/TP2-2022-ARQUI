@@ -20,6 +20,39 @@ module tb_top();
     wire                    o_rx_done;
     wire    [NB_DATA-1:0]   o_rx_uart;
     
+      top
+    #(
+        .NB_CODE        (NB_CODE),
+        .SB_TICK        (SB_TICK),
+        .NB_DATA        (NB_DATA),
+        .NB_STATE       (NB_STATE)
+    )
+    u_top
+    (
+        .i_clk          (i_clk),
+        .i_reset        (i_reset),
+        .i_rx           (i_rx_top),
+        .o_tx           (o_tx_top)
+    );
+    
+    uart
+    #(
+        .NB_DATA          (NB_DATA),
+        .SB_TICK          (SB_TICK),
+        .NB_STATE         (NB_STATE)
+    )
+    u_uart
+    (
+        .i_rx             (o_tx_top), 
+        .i_tx_start       (i_tx_start),
+        .i_tx             (i_tx_uart),
+        .i_clk            (i_clk),
+        .i_reset          (i_reset), 
+        .o_tx             (i_rx_top),
+        .o_tx_done_tick   (o_tx_done),
+        .o_rx_done_tick   (o_rx_done),
+        .o_rx             (o_rx_uart)
+    );
     
     initial begin
         i_clk = 1'b0;
@@ -56,39 +89,6 @@ module tb_top();
         $finish();
     end
     
-    top
-    #(
-        .NB_CODE        (NB_CODE),
-        .SB_TICK        (SB_TICK),
-        .NB_DATA        (NB_DATA),
-        .NB_STATE       (NB_STATE)
-    )
-    u_top
-    (
-        .i_clk          (i_clk),
-        .i_reset        (i_reset),
-        .i_rx           (i_rx_top),
-        .o_tx           (o_tx_top)
-    );
-    
-    uart
-    #(
-        .NB_DATA          (NB_DATA),
-        .SB_TICK          (SB_TICK),
-        .NB_STATE         (NB_STATE)
-    )
-    u_uart
-    (
-        .i_rx             (o_tx_top), 
-        .i_tx_start       (i_tx_start),
-        .i_tx             (i_tx_uart),
-        .i_clk            (i_clk),
-        .i_reset          (i_reset), 
-        .o_tx             (i_rx_top),
-        .o_tx_done_tick   (o_tx_done),
-        .o_rx_done_tick   (o_rx_done),
-        .o_rx             (o_rx_uart)
-    );
          
    always #10 i_clk = ~i_clk;
 
@@ -100,7 +100,7 @@ module tb_top();
                 $finish();
             end
             else begin
-                $display("**********Test CORRECTO, resultado = %b **********",o_rx_uart);
+                $display("**********Test CORRECTO, resultado = %b en TOP **********",o_rx_uart);
            end
        end
    end
