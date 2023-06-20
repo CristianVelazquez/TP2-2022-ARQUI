@@ -31,7 +31,7 @@ always @(posedge i_clk, posedge i_reset) begin
 	if(i_reset) begin                                     //Se inicializan los datos  
         data_A          <= 8'b00000000;                   
         data_B          <= 8'b00000000;
-        operation       <= 5'b00000;
+        operation       <= 6'b000000;
         state           <= STATE_A;
     end
 	else begin
@@ -75,7 +75,7 @@ always @(*) begin
             next_state      = STATE_A;
             next_data_A     = 8'b00000000;
             next_data_B     = 8'b00000000;
-            next_operation  = 5'b00000;
+            next_operation  = 6'b000000;
         end
 	endcase
 end
