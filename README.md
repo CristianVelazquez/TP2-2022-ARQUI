@@ -100,7 +100,7 @@ Figura 5. Diagrama esquemático de la `interfaz`
 
 En la pc se ejecuta un programita en python el cual espera que se ingrese el dato A, luego B y por ultimo el tipo operacion deseada. Para el caso de la operacion se usa el nombre de la op
 
-En la imagen se puede que se envia un 3 y un 1 para realizas una resta (SUB).
+En la imagen se puede ver que se envia un 3 y un 1 para realizar una resta (SUB).
 
 ![ejemplo_py.png](./image/ejemplo_py.png)
 
@@ -113,21 +113,23 @@ Cuando si encuentra ese rango de numeros y palabras, envia sus respectivos valor
 
 La FPGA espera el primer dato (A), luego se debe presionar el pulsador T17 para que el FIFO espere el segundo dato (B), por ultimo se presiona de nuevo el pulsado para el dato C (op). 
 
-En los leds se puede ver los datos que van llegando a la fifo. Para enviar el resultado se presiona el pulsador W19. En este momento se puede ver en los leds el resultado de la salida del fifo_tx y se envia el dato por tx.
-
 DATO A (3)
 
-![datoa.png](./image/datoa.png)
+![datoa.jpg](./image/datoa.jpg)
 
 
 DATO B (1)
 
-![datob.png](./image/datob.png)
+![datob.jpg](./image/datob.jpg)
+
 
 DATO C (6'b100010)
 
-![datoc.png](./image/datoc.png)
+![datoc.jpg](./image/datoc.jpg)
+
+
+En los leds se puede ver los datos que van llegando a la fifo. Para enviar el resultado se presiona el pulsador W19. En este momento se puede ver en los leds el resultado de la salida del fifo_tx y se envia el dato por tx.
 
 RESULTADO 2
 
-![resultado.png](./image/resultado.png)
+![resultado.jpg](./image/resultado.jpg)
