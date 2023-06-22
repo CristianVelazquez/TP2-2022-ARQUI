@@ -120,7 +120,7 @@ DATO A (3)
 
 DATO B (1)
 
-![datob.jpg](./image/datob.jpg)
+![datob.png](./image/datob.png)
 
 
 DATO C (6'b100010)
@@ -130,6 +130,6 @@ DATO C (6'b100010)
 
 En los leds se puede ver los datos que van llegando a la fifo. Para enviar el resultado se presiona el pulsador W19. En este momento se puede ver en los leds el resultado de la salida del fifo_tx y se envia el dato por tx.
 
-RESULTADO 2
+RESULTADO 2 (v3=1 y v13=0)
 
 ![resultado.jpg](./image/resultado.jpg)
