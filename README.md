@@ -24,7 +24,7 @@ Un UART incluye un transmisor y un receptor. El transmisor es esencialmente un r
 Antes de que comience la transmisión, el transmisor y el receptor deben acordar un conjunto de parámetros por adelantado, que incluyen la velocidad en baudios (es decir, la cantidad de bits por segundo), la cantidad de bits de datos y bits de parada, y el uso del bit de paridad. Las velocidades de transmisión comúnmente utilizadas son 2400, 4800, 9600 y 19,200 baudios.
 
 
-Ilustramos el diseño de los subsistemas de recepción y transmisión en las siguientes secciones. El diseño está personalizado para un UART con una velocidad de transmisión de 19.200 baudios, 8 bits de datos, 1 bit de parada y sin bit de paridad.
+Ilustramos el diseño de los subsistemas de recepción y transmisión en las siguientes secciones. El diseño está personalizado para un UART con una velocidad de transmisión de 38400 baudios, 8 bits de datos, 1 bit de parada y sin bit de paridad.
 
 Dado que no se transmite información de reloj desde la señal transmitida, el receptor puede recuperar los bits de datos solo utilizando los parámetros predeterminados. Usamos un esquema de sobremuestreo para estimar los puntos medios de los bits transmitidos y luego los recuperamos en estos puntos en consecuencia.
 
@@ -51,7 +51,7 @@ El esquema de sobremuestreo básicamente realiza la función de una señal de re
 
 El generador de velocidad en baudios genera una señal de muestreo cuya frecuencia es exactamente 16 veces la velocidad en baudios designada por el UART.
 
-Para la velocidad de 19.200 baudios, la velocidad de muestreo debe ser de 307.200 (es decir, 19.200* 16) impulsos por segundo. Dado que la velocidad del reloj del sistema es de 50 MHz, el generador de velocidad en baudios necesita un contador mod-163 (es decir, (50 * 10 ^ 6)/(307.200)), en el que se afirma un tic de un ciclo de reloj una vez cada 163 ciclos de reloj. 
+Para la velocidad de 38.400 baudios, la velocidad de muestreo debe ser de 614400 (es decir, 38400* 16) impulsos por segundo. Dado que la velocidad del reloj del sistema es de 100 MHz, el generador de velocidad en baudios necesita un contador mod-163 (es decir, (100 * 10 ^ 6)/(614400)), en el que se afirma un tic de un ciclo de reloj una vez cada 163 ciclos de reloj. 
 
 ### Receptor UART
 
@@ -85,62 +85,49 @@ Figura 2. Diagrama de estados de un transmisor
 En el diagrama esquemático de la Figura 3 se puede apreciar la jerarquia de bloques y su interconexion
 
 
-![sintesis.png](./image/sintesis.png)
+![completo.png](./image/completo.png)
 
 Figura 3. Diagrama esquemático del sistema
 
-A continuación se observa sobre el interior del componente `UART`
+A continuación se observa sobre el interior de la `interfaz` donde se encuentra la alu
 
-![zoomUart.png](./image/zoomUart.png)
-
-Figura 4. Diagrama esquemático del `UART`
-
-A continuación se observa sobre el interior de la `ALU`
-
-![aluZoom.png](./image/aluZoom.png)
+![interzas.png](./image/interfaz.png)
 
 
-Figura 5. Diagrama esquemático de la `ALU`
+Figura 5. Diagrama esquemático de la `interfaz`
 
-### Simulación
+### Ejecucion del programa
 
-Para comprobar el correcto funcionamiento del sistema se realiza una operación de suma (3+8)
+En la pc se ejecuta un programita en python el cual espera que se ingrese el dato A, luego B y por ultimo el tipo operacion deseada. Para el caso de la operacion se usa el nombre de la op
 
-La Figura muestra el primer dato enviado (3)
+En la imagen se puede que se envia un 3 y un 1 para realizas una resta (SUB).
 
-![tx_datoA.png](./image/tx_datoA.png)
-
-Figura 6. I_DATA_A
+![ejemplo_py.png](./image/ejemplo_py.png)
 
 
-Después de la afirmación de la señal de inicio de tx, se carga la palabra de datos
+Respecto al programa que corre la pc, en este se realiza una busqueda de ciertos valores. Esto son los numeros de 0 a 9 y las palabras ADD, SUB, AND, OR, XOR, SRL,SRA y NOR.
 
-![i_tx_sart.png](./image/i_tx_sart.png)
+Cuando si encuentra ese rango de numeros y palabras, envia sus respectivos valores en ASCII, ya que cuando se escribe por ejemplo un 0, este se envia como un char 0 el cual tiene otro valor en ASCII
 
-Figura 7. Señal `i_tx_start`
+### FPGA
+
+La FPGA espera el primer dato (A), luego se debe presionar el pulsador T17 para que el FIFO espere el segundo dato (B), por ultimo se presiona de nuevo el pulsado para el dato C (op). 
+
+En los leds se puede ver los datos que van llegando a la fifo. Para enviar el resultado se presiona el pulsador W19. En este momento se puede ver en los leds el resultado de la salida del fifo_tx y se envia el dato por tx.
+
+DATO A (3)
+
+![datoa.png](./image/datoa.png)
 
 
-Cuando se completa el proceso de transmisión se genera la señal `o_tx_done`
+DATO B (1)
 
-![o_tx_done.png](./image/o_tx_done.png)
+![datob.png](./image/datob.png)
 
-Figura 8. Señal `o_tx_done`
+DATO C (6'b100010)
 
+![datoc.png](./image/datoc.png)
 
-![o_rx_uart.png](./image/o_rx_uart.png)
-
-Figura 9. Resultado de la operación
-
-Después de que se completa el proceso de recepción se genera la señal `o_rx_done`
-
-![o_rx_done.png](./image/o_rx_done.png)
-
-Figura 10. Señal `o_rx_done`
-
-La Figura muestra la comprobación del resultado que su muestra por consola (3+8=11)
-
+RESULTADO 2
 
 ![resultado.png](./image/resultado.png)
-
-Figura 11. Comprobación del resultado
-
